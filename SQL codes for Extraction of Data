@@ -1,0 +1,129 @@
+-- Step 1: Filter sessions data to include only sessions that started on or after '2023-01-04'
+WITH FilteredSessions AS (
+  SELECT
+    user_id,
+    session_id,
+    session_start,
+    session_end,
+    page_clicks,
+    flight_discount,
+    hotel_discount,
+    flight_booked,
+    hotel_booked,
+    cancellation,
+    trip_id
+  FROM sessions
+  WHERE session_start >= '2023-01-04'
+),
+
+-- Step 2: Aggregate session data to calculate various session-related metrics
+AggregatedSessions AS (
+  SELECT
+    user_id,
+    COUNT(DISTINCT session_id) AS num_sessions,
+    SUM(page_clicks) AS page_clicks,
+    COUNT(CASE WHEN flight_discount = TRUE THEN 1 END) AS total_flight_discounts,
+    COUNT(CASE WHEN hotel_discount = TRUE THEN 1 END) AS total_hotel_discounts,
+    COUNT(CASE WHEN flight_booked = TRUE THEN 1 END) AS total_flights_booked,
+    COUNT(CASE WHEN hotel_booked = TRUE THEN 1 END) AS total_hotels_booked,
+    COUNT(CASE WHEN cancellation = TRUE THEN 1 END) AS cancellations
+  FROM FilteredSessions
+  GROUP BY user_id
+  HAVING COUNT(DISTINCT session_id) > 7
+),
+
+-- Step 3: Retrieve flights-related data for each user
+FlightsData AS (
+  SELECT
+    fs.user_id,
+    SUM(f.checked_bags) AS total_checked_bags,
+    MAX(f.destination_airport_lat) AS destination_airport_lat,
+    MAX(f.destination_airport_lon) AS destination_airport_lon,
+    MAX(f.departure_time) AS departure_time,
+    MAX(f.return_time) AS return_time,
+    MAX(f.base_fare_usd) AS base_fare_usd,
+    MAX(f.destination) AS destination,
+    MAX(f.destination_airport) AS destination_airport,
+    SUM(f.return_flight_booked::int) AS total_return_flights_booked
+  FROM FilteredSessions fs
+  JOIN flights f ON fs.trip_id = f.trip_id
+  GROUP BY fs.user_id
+),
+
+-- Step 4: Retrieve hotel-related data for each user
+HotelsData AS (
+  SELECT
+    fs.user_id,
+    SUM(h.rooms) AS total_rooms_booked,
+    MAX(h.check_in_time) AS check_in_time,
+    MAX(h.check_out_time) AS check_out_time
+  FROM FilteredSessions fs
+  JOIN hotels h ON fs.trip_id = h.trip_id
+  GROUP BY fs.user_id
+)
+
+-- Step 5: Combine all the data to create a comprehensive dataset
+SELECT
+  u.user_id,
+  u.sign_up_date,
+  u.gender,
+  CASE WHEN u.married THEN 'Married' ELSE 'Unmarried' END AS marital_status,
+  CASE WHEN u.has_children THEN 'Has children' ELSE 'Has no children' END AS children_status,
+  u.home_country,
+  u.home_city,
+  u.home_airport,
+  fd.destination,
+  fd.destination_airport,
+  a.page_clicks,
+  fd.base_fare_usd,
+  u.home_airport_lat,
+  u.home_airport_lon,
+  fd.destination_airport_lat,
+  fd.destination_airport_lon,
+  TO_CHAR(hd.check_in_time, 'YYYY-MM-DD HH24:MI:SS') AS check_in_time,
+  TO_CHAR(hd.check_out_time, 'YYYY-MM-DD HH24:MI:SS') AS check_out_time,
+  EXTRACT(YEAR FROM AGE(CURRENT_DATE, u.birthdate))::INTEGER AS age,
+  ROUND(AVG(EXTRACT(EPOCH FROM fs.session_end - fs.session_start) / 60.0), 1) AS avg_session_length,
+  a.num_sessions,
+  a.total_flights_booked,
+  a.total_hotels_booked,
+  fd.total_return_flights_booked,
+  COALESCE(fd.total_checked_bags, 0) AS total_checked_bags,
+  a.cancellations,
+  COALESCE(a.total_flight_discounts::FLOAT, 0) AS total_flight_discounts,
+  COALESCE(a.total_hotel_discounts::FLOAT, 0) AS total_hotel_discounts,
+  COALESCE(hd.total_rooms_booked::FLOAT, 0) AS total_rooms_booked
+FROM
+  users u
+INNER JOIN AggregatedSessions a ON u.user_id = a.user_id
+LEFT JOIN FlightsData fd ON u.user_id = fd.user_id
+LEFT JOIN HotelsData hd ON u.user_id = hd.user_id
+LEFT JOIN FilteredSessions fs ON u.user_id = fs.user_id
+GROUP BY
+  u.user_id,
+  u.sign_up_date,
+  u.gender,
+  u.married,
+  u.has_children,
+  u.home_country,
+  u.home_city,
+  u.home_airport,
+  fd.destination,
+  fd.destination_airport,
+  a.page_clicks,
+  fd.base_fare_usd,
+  u.home_airport_lat,
+  u.home_airport_lon,
+  fd.destination_airport_lat,
+  fd.destination_airport_lon,
+  hd.check_in_time,
+  hd.check_out_time,
+  a.num_sessions,
+  a.total_flights_booked,
+  a.total_hotels_booked,
+  fd.total_return_flights_booked,
+  fd.total_checked_bags,
+  a.cancellations,
+  a.total_flight_discounts,
+  a.total_hotel_discounts,
+  hd.total_rooms_booked;
