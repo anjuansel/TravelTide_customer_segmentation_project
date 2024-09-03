@@ -8,7 +8,7 @@ TravelTide, a dynamic e-booking startup, is on a mission to enhance customer ret
 
 **Customer Segmentation:** We applied K-Means clustering to categorize customers based on their booking behaviors, preferences, and engagement patterns. This segmentation provides a clear understanding of various customer profiles and their distinct needs.
 
-**Perk Customization:** By examining the characteristics of each customer segment, we identified the most appealing perks—such as free hotel meals, free checked bags, and exclusive discounts. This customization ensures that rewards align closely with individual customer preferences.
+**Perk Customization:** By examining the characteristics of each customer segment, we identified the most appealing perks such as free hotel meals, free checked bags, and exclusive discounts. This customization ensures that rewards align closely with individual customer preferences.
 
 **Data-Driven Decision Making:** Our analysis is grounded in comprehensive data, offering actionable recommendations for TravelTide’s marketing team. These insights will guide the development of a more effective rewards program, helping to boost customer engagement and loyalty.
 
