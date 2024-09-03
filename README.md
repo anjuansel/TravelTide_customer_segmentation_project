@@ -1,1 +1,1 @@
-# TravelTide_customer_segmentation_project
+**TravelTide: Crafting a Personalized Rewards Program to Boost Customer Loyalty**
