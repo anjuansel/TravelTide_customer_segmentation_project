@@ -15,7 +15,11 @@ TravelTide, a dynamic e-booking startup, is on a mission to enhance customer ret
 **Key Features**
 
 **Data Analysis:** We utilized data analytics to understand customer behavior, preferences, and booking patterns.
+
 **K-Means Clustering:** Applied K-Means clustering to segment customers into distinct groups.
+
 **Optimal Cluster Count:** Determined the optimal number of clusters using the Elbow Plot and Silhouette Score.
+
 **Perk Insights:** Identified which perks appeal to specific customer segments.
+
 **Recommendations:** We provide actionable recommendations for TravelTide, including the implementation of a multi-level rewards program, perk bundling, and targeted marketing strategies.
